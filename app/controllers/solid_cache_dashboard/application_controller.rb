@@ -13,7 +13,9 @@ module SolidCacheDashboard
 
     # Pagy compatibility wrapper for both v43+ and v6-8.x
     def pagy(collection, **options)
-      if defined?(Pagy::Method)
+      pagy_version = Gem::Version.new(Pagy::VERSION)
+      
+      if pagy_version >= Gem::Version.new('43.0.0')
         # Pagy 43+: pagy(:offset, collection, limit: N)
         limit = options.delete(:items) || options.delete(:limit) || 25
         super(:offset, collection, **options.merge(limit: limit))

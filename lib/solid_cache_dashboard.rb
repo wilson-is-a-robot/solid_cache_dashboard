@@ -23,6 +23,17 @@ module SolidCacheDashboard
     @pagy_43_or_newer ||= Gem::Version.new(Pagy::VERSION) >= Gem::Version.new('43.0.0')
   end
 
+  # Helper to get series from pagy object (handles API differences)
+  def self.pagy_series(pagy)
+    if pagy_43_or_newer?
+      # In Pagy 43+, series is a protected method
+      pagy.send(:series)
+    else
+      # In older versions, series was a public method
+      pagy.series
+    end
+  end
+
   def self.cache_keys
     SolidCache::Entry.pluck(:key_hash).uniq
   end

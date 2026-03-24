@@ -26,7 +26,7 @@
             </span>
           <% end %>
           
-          <% pagy.series.each do |item| %>
+          <% pagy_series(pagy).each do |item| %>
             <% if item.is_a?(Integer) %>
               <%= link_to item, path_for_page.call(item), class: "relative inline-flex items-center px-4 py-2 border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-card text-sm font-medium #{'text-blue-600 dark:text-blue-400' if item == pagy.page} #{'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700' if item != pagy.page}" %>
             <% elsif item.is_a?(String) && item == pagy.page.to_s %>

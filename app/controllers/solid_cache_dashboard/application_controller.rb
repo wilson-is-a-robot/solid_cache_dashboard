@@ -13,7 +13,7 @@ module SolidCacheDashboard
 
     # Pagy compatibility wrapper for both v43+ and v6-8.x
     def pagy(collection, **options)
-      if defined?(Pagy::Method) && method(:pagy).owner == Pagy::Method
+      if defined?(Pagy::Method)
         # Pagy 43+: pagy(:offset, collection, limit: N)
         limit = options.delete(:items) || options.delete(:limit) || 25
         super(:offset, collection, **options.merge(limit: limit))

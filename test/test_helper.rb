@@ -17,7 +17,7 @@ class TestApp < Rails::Application
   config.secret_key_base = "secret"
   
   # Disable deprecation warnings
-  ActiveSupport::Deprecation.silenced = true
+  config.active_support.deprecation = :silence
 end
 
 TestApp.initialize!
@@ -61,13 +61,29 @@ end
 # Load the gem
 require "solid_cache_dashboard"
 
+# Include Pagy modules in controllers before loading engine code
+if SolidCacheDashboard.pagy_43_or_newer?
+  ActionController::Base.include Pagy::Method
+else
+  ActionController::Base.include Pagy::Backend
+end
+
+# Ensure engine code is loaded for testing
+require_relative "../app/helpers/solid_cache_dashboard/application_helper"
+require_relative "../app/controllers/solid_cache_dashboard/application_controller"
+
+# Register the engine's view paths so partials can be found
+engine_views = File.expand_path("../app/views", __dir__)
+ActionController::Base.prepend_view_path(engine_views)
+
+
 # Test helpers
 class ActiveSupport::TestCase
   def assert_pagy_compatibility
     if SolidCacheDashboard.pagy_43_or_newer?
-      assert Gem::Version.new(Pagy::VERSION) >= Gem::Version.new('43.0.0')
+      assert Gem::Version.new(Pagy::VERSION) >= Gem::Version.new("43.0.0")
     else
-      assert Gem::Version.new(Pagy::VERSION) < Gem::Version.new('43.0.0')
+      assert Gem::Version.new(Pagy::VERSION) < Gem::Version.new("43.0.0")
     end
   end
 end

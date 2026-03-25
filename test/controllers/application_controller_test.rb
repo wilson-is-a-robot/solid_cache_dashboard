@@ -1,26 +1,26 @@
 require "test_helper"
 
-class ApplicationControllerTest < ActionController::TestCase
+class ApplicationControllerTest < ActionDispatch::IntegrationTest
   class TestController < SolidCacheDashboard::ApplicationController
     def index
       collection = SolidCache::Entry.all
       @pagy, @records = pagy(collection, items: 25)
-      
+
+      prev_page = SolidCacheDashboard.pagy_43_or_newer? ? @pagy.previous : @pagy.prev
+
       render json: {
         pagy_class: @pagy.class.name,
         total_count: @pagy.count,
         current_page: @pagy.page,
-        has_previous: @pagy.respond_to?(:prev) ? !!@pagy.prev : !!@pagy.previous,
-        has_next: !!@pagy.next,
+        previous_page: prev_page,
+        next_page: @pagy.next,
+        pages: @pagy.pages,
         limit: @pagy.respond_to?(:limit) ? @pagy.limit : @pagy.items
       }
     end
   end
 
-  tests TestController
-
   setup do
-    # Create some test data
     10.times do |i|
       SolidCache::Entry.create!(
         key: "key_#{i}",
@@ -30,9 +30,8 @@ class ApplicationControllerTest < ActionController::TestCase
       )
     end
 
-    # Setup routes
     Rails.application.routes.draw do
-      get 'test' => 'application_controller_test/test#index'
+      get "test" => "application_controller_test/test#index"
     end
   end
 
@@ -41,27 +40,65 @@ class ApplicationControllerTest < ActionController::TestCase
   end
 
   test "pagy wrapper creates correct pagy object for current version" do
-    get :index
-    
+    get "/test"
+
     json = JSON.parse(response.body)
-    
+
     assert_response :success
-    
+
     if SolidCacheDashboard.pagy_43_or_newer?
-      assert_match(/Pagy::Offset/, json['pagy_class'])
-      assert_equal 25, json['limit']
+      assert_match(/Pagy::Offset/, json["pagy_class"])
+      assert_equal 25, json["limit"]
     else
-      assert_match(/Pagy/, json['pagy_class'])
-      assert_equal 25, json['limit']
+      assert_match(/Pagy/, json["pagy_class"])
+      assert_equal 25, json["limit"]
     end
-    
-    assert_equal 10, json['total_count']
-    assert_equal 1, json['current_page']
+
+    assert_equal 10, json["total_count"]
+    assert_equal 1, json["current_page"]
   end
 
-  test "pagy navigation attributes work correctly" do
-    # Create more records to test pagination
-    40.times do |i|
+  test "first page has next but no previous" do
+    create_extra_entries(40)
+
+    get "/test"
+    json = JSON.parse(response.body)
+
+    assert_equal 50, json["total_count"]
+    assert_equal 1, json["current_page"]
+    assert_nil json["previous_page"]
+    assert_equal 2, json["next_page"]
+  end
+
+  test "middle page has both previous and next" do
+    create_extra_entries(40)
+
+    get "/test?page=2"
+    json = JSON.parse(response.body)
+
+    assert_equal 50, json["total_count"]
+    assert_equal 2, json["current_page"]
+    assert_equal 1, json["previous_page"]
+    assert_equal 2, json["pages"]
+  end
+
+  test "last page has previous but no next" do
+    create_extra_entries(90)
+
+    get "/test?page=4"
+    json = JSON.parse(response.body)
+
+    assert_equal 100, json["total_count"]
+    assert_equal 4, json["current_page"]
+    assert_equal 3, json["previous_page"]
+    assert_nil json["next_page"]
+    assert_equal 4, json["pages"]
+  end
+
+  private
+
+  def create_extra_entries(count)
+    count.times do |i|
       SolidCache::Entry.create!(
         key: "extra_key_#{i}",
         value: "extra_value_#{i}",
@@ -69,12 +106,5 @@ class ApplicationControllerTest < ActionController::TestCase
         byte_size: 100
       )
     end
-    
-    get :index
-    json = JSON.parse(response.body)
-    
-    assert_equal 50, json['total_count']
-    assert_equal false, json['has_previous'] # First page
-    assert_equal true, json['has_next']     # Has more pages
   end
 end

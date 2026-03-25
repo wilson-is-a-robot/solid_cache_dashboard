@@ -10,7 +10,7 @@ class PaginationViewTest < ActionView::TestCase
   end
 
   test "pagination partial renders without errors for single page" do
-    pagy = create_pagy(count: 10, page: 1, limit: 25)
+    pagy = create_pagy(count: 10, page: 1, per_page: 25)
 
     html = render_pagination(pagy)
 
@@ -18,7 +18,7 @@ class PaginationViewTest < ActionView::TestCase
   end
 
   test "previous attribute compatibility" do
-    pagy = create_pagy(count: 100, page: 2, limit: 10)
+    pagy = create_pagy(count: 100, page: 2, per_page: 10)
 
     if SolidCacheDashboard.pagy_43_or_newer?
       assert_equal 1, pagy.previous
@@ -28,14 +28,6 @@ class PaginationViewTest < ActionView::TestCase
   end
 
   private
-
-  def create_pagy(count:, page:, limit:)
-    if SolidCacheDashboard.pagy_43_or_newer?
-      Pagy::Offset.new(count: count, page: page, limit: limit)
-    else
-      Pagy.new(count: count, page: page, items: limit)
-    end
-  end
 
   def render_pagination(pagy)
     render partial: "solid_cache_dashboard/application/pagination",

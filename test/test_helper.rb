@@ -78,12 +78,12 @@ ActionController::Base.prepend_view_path(engine_views)
 
 
 # Test helpers
-class ActiveSupport::TestCase
-  def assert_pagy_compatibility
-    if SolidCacheDashboard.pagy_43_or_newer?
-      assert Gem::Version.new(Pagy::VERSION) >= Gem::Version.new("43.0.0")
-    else
-      assert Gem::Version.new(Pagy::VERSION) < Gem::Version.new("43.0.0")
-    end
+def create_pagy(count:, page:, per_page:)
+  if SolidCacheDashboard.pagy_43_or_newer?
+    Pagy::Offset.new(count: count, page: page, limit: per_page)
+  elsif SolidCacheDashboard.pagy_uses_limit?
+    Pagy.new(count: count, page: page, limit: per_page)
+  else
+    Pagy.new(count: count, page: page, items: per_page)
   end
 end

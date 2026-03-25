@@ -12,7 +12,7 @@ class PagyCompatibilityTest < ActiveSupport::TestCase
   test "pagy_series works with pagy objects on older Pagy" do
     skip "Only applicable to Pagy < 43" if SolidCacheDashboard.pagy_43_or_newer?
 
-    pagy = Pagy.new(count: 100, page: 1, items: 10)
+    pagy = create_pagy(count: 100, page: 1, per_page: 10)
     series = SolidCacheDashboard.pagy_series(pagy)
 
     assert series.is_a?(Array)

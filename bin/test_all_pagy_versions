@@ -25,7 +25,7 @@ gemspec
 gem "rake"
 gem "minitest"
 gem "rails", ">= 7.0"
-gem "sqlite3", "~> 1.4"
+gem "sqlite3"
 gem "pagy", "~> $version.0"
 EOF
   

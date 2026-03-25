@@ -11,16 +11,16 @@ module SolidCacheDashboard
 
     private
 
-    # Pagy compatibility wrapper for both v43+ and v6-8.x
+    # Pagy compatibility wrapper
     def pagy(collection, **options)
+      per_page = options.delete(:items) || options.delete(:limit) || 25
+
       if SolidCacheDashboard.pagy_43_or_newer?
-        # Pagy 43+: pagy(:offset, collection, limit: N)
-        limit = options.delete(:items) || options.delete(:limit) || 25
-        super(:offset, collection, **options.merge(limit: limit))
+        super(:offset, collection, **options.merge(limit: per_page))
+      elsif SolidCacheDashboard.pagy_uses_limit?
+        super(collection, **options.merge(limit: per_page))
       else
-        # Pagy 6-8.x: pagy(collection, items: N)
-        items = options.delete(:limit) || options.delete(:items) || 25
-        super(collection, **options.merge(items: items))
+        super(collection, **options.merge(items: per_page))
       end
     end
   end
